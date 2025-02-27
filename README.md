@@ -56,6 +56,38 @@ The application also logs Google Docs-specific MIME types for debugging purposes
 - `application/x-vnd.google-docs-document-slice-clip+wrapped`
 - `application/x-vnd.google-docs-internal-clip-id`
 
+### Understanding `application/x-vnd.google-docs-document-slice-clip+wrapped`
+
+This MIME type is specific to Google Docs and contains a proprietary format that preserves the rich formatting and structure of content copied from Google Docs documents.
+
+#### Format Structure
+
+The `application/x-vnd.google-docs-document-slice-clip+wrapped` format:
+
+1. **Proprietary Encoding**: Contains Google's internal representation of document content
+2. **Binary Data**: Typically encoded as a base64 string within a JSON wrapper
+3. **Complete Formatting**: Preserves all formatting, styles, and document-specific metadata
+4. **Vendor-Specific**: The `x-vnd` prefix indicates it's a vendor-specific format (Google)
+
+#### Why It Matters
+
+This format is important for several reasons:
+
+- **Lossless Copy/Paste**: When pasting back into Google Docs, this format ensures perfect preservation of all formatting and styles
+- **Document Context**: Contains information about the source document and context of the copied content
+- **Advanced Features**: Preserves Google Docs-specific features that don't exist in standard HTML (comments, suggestions, etc.)
+- **Version Information**: May include document version data for tracking purposes
+
+#### How It's Used
+
+While our application doesn't directly parse this format (we use the `text/html` representation instead), understanding its presence helps with:
+
+1. **Debugging**: Identifying when content comes specifically from Google Docs
+2. **Feature Development**: Potential future enhancements could leverage this data
+3. **Compatibility**: Ensuring our application handles Google Docs content correctly
+
+The format is wrapped (`+wrapped` suffix) which indicates it contains additional metadata beyond just the document slice itself.
+
 ### Code Example
 
 ```typescript
