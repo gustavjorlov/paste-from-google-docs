@@ -1,54 +1,204 @@
-# React + TypeScript + Vite
+# CopyPasteEditor: Google Docs to Markdown Converter
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React application that converts formatted content from Google Docs (and other rich text sources) to Markdown format using clipboard MIME types.
 
-Currently, two official plugins are available:
+## Table of Contents
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- [Overview](#overview)
+- [Features](#features)
+- [Understanding Clipboard MIME Types](#understanding-clipboard-mime-types)
+- [HTML to Markdown Conversion](#html-to-markdown-conversion)
+- [Implementation Details](#implementation-details)
+- [Getting Started](#getting-started)
+- [Development](#development)
 
-## Expanding the ESLint configuration
+## Overview
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+CopyPasteEditor is a web application that allows users to paste rich text content (particularly from Google Docs) and automatically converts it to Markdown format. The application leverages the clipboard API to access HTML content and transforms it into clean, portable Markdown.
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Features
+
+- Paste formatted content from Google Docs and other rich text editors
+- Automatic conversion to Markdown format
+- Real-time preview of the converted Markdown
+- Support for various formatting elements:
+  - Headings (H1-H6)
+  - Bold, italic, underline, and strikethrough text
+  - Ordered and unordered lists
+  - Links and images
+  - Blockquotes
+  - Code blocks
+  - And more
+
+## Understanding Clipboard MIME Types
+
+### What are MIME Types?
+
+MIME (Multipurpose Internet Mail Extensions) types are labels used to identify the format of data. When you copy content to your clipboard, the system stores that content in multiple formats, each identified by a MIME type.
+
+### Clipboard Data Structure
+
+When you copy content from an application like Google Docs, the clipboard doesn't just store plain text. Instead, it stores multiple representations of the same content in different formats, including:
+
+- `text/plain`: Simple unformatted text
+- `text/html`: HTML representation with formatting
+- Application-specific formats (e.g., `application/x-vnd.google-docs-document-slice-clip+wrapped`)
+
+### How This Application Uses MIME Types
+
+This application intercepts paste events and examines the clipboard data for different MIME types:
+
+1. First, it checks for `text/html` content, which preserves formatting
+2. If HTML content is available, it converts it to Markdown
+3. If HTML is not available, it falls back to `text/plain`
+
+The application also logs Google Docs-specific MIME types for debugging purposes:
+- `application/x-vnd.google-docs-document-slice-clip+wrapped`
+- `application/x-vnd.google-docs-internal-clip-id`
+
+### Code Example
+
+```typescript
+const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+  // Prevent the default paste behavior
+  e.preventDefault();
+
+  // Get clipboard data
+  const clipboardData = e.clipboardData;
+
+  // Try to get HTML content first
+  let content = clipboardData.getData("text/html");
+  
+  if (content) {
+    // Convert HTML to Markdown
+    const markdown = convertHtmlToMarkdown(content);
+    // Insert the markdown at cursor position
+    // ...
+  } else {
+    // Fallback to plain text if HTML is not available
+    content = clipboardData.getData("text/plain");
+    // Insert the plain text at cursor position
+    // ...
+  }
+};
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## HTML to Markdown Conversion
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Conversion Process
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+The application converts HTML to Markdown through these steps:
+
+1. Parse the HTML content into a DOM structure
+2. Recursively process each node in the DOM tree
+3. Apply specific conversion rules based on element types and styles
+4. Generate equivalent Markdown syntax
+
+### Supported Conversions
+
+The converter handles various HTML elements and styles:
+
+| HTML Element/Style | Markdown Equivalent |
+|--------------------|---------------------|
+| `<h1>` to `<h6>` | `#` to `######` |
+| `<strong>`, `<b>` | `**bold**` |
+| `<em>`, `<i>` | `*italic*` |
+| `<s>`, `<del>` | `~~strikethrough~~` |
+| `<a href="...">` | `[link text](url)` |
+| `<ul>`, `<li>` | `- list item` |
+| `<ol>`, `<li>` | `1. list item` |
+| `<blockquote>` | `> quoted text` |
+| `<code>` | `` `code` `` |
+| `<pre>` | ` ```code block``` ` |
+| `<img>` | `![alt text](image url)` |
+
+### Implementation Highlights
+
+The conversion is implemented through a recursive function that processes each node in the HTML tree:
+
+```typescript
+const processNode = (node: Node): string => {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node.textContent || "";
+  }
+
+  if (node.nodeType === Node.ELEMENT_NODE) {
+    const element = node as HTMLElement;
+    const tagName = element.tagName.toLowerCase();
+    const style = element.style;
+    const children = Array.from(element.childNodes)
+      .map(processNode)
+      .join("");
+
+    // Handle different HTML elements and styles
+    switch (tagName) {
+      case "h1":
+        return `# ${children}\n\n`;
+      case "strong":
+      case "b":
+        return `**${children}**`;
+      // ... other element handlers
+    }
+  }
+
+  return "";
+};
 ```
+
+## Implementation Details
+
+### Project Structure
+
+This project is built with:
+- React 19
+- TypeScript
+- Vite as the build tool
+- react-markdown for rendering the preview
+
+### Key Components
+
+1. **Paste Handler**: Intercepts paste events and extracts HTML content from the clipboard
+2. **HTML to Markdown Converter**: Transforms HTML into equivalent Markdown syntax
+3. **Editor Interface**: Split-screen UI with editor and preview panes
+4. **Markdown Renderer**: Uses react-markdown to render the preview
+
+### Core Functionality
+
+The main functionality is implemented in `App.tsx` with these key functions:
+
+- `handlePaste`: Intercepts paste events and processes clipboard data
+- `convertHtmlToMarkdown`: Transforms HTML content to Markdown
+- `processNode`: Recursively processes HTML nodes and applies conversion rules
+
+## Getting Started
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/copy-paste-editor.git
+
+# Navigate to the project directory
+cd copy-paste-editor
+
+# Install dependencies
+npm install
+```
+
+### Running the Application
+
+```bash
+# Start the development server
+npm run dev
+```
+
+The application will be available at http://localhost:5173 (or another port if 5173 is in use).
+
+## Development
+
+### Available Scripts
+
+- `npm run dev`: Start the development server
+- `npm run build`: Build the application for production
+- `npm run lint`: Run ESLint to check for code issues
+- `npm run preview`: Preview the production build locally
