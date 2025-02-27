@@ -1,10 +1,43 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 import ReactMarkdown from "react-markdown";
 
 function App() {
   const [text, setText] = useState("");
   const [rawHtml, setRawHtml] = useState("");
+  const [readmeContent, setReadmeContent] = useState("");
+  
+  useEffect(() => {
+    // Fetch the README.md content
+    fetch("/README.md")
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch README.md");
+        }
+        return response.text();
+      })
+      .then(content => {
+        setReadmeContent(content);
+      })
+      .catch(error => {
+        console.error("Error fetching README.md:", error);
+        // Try alternative path if the first attempt fails
+        fetch("./README.md")
+          .then(response => {
+            if (!response.ok) {
+              throw new Error("Failed to fetch README.md from alternative path");
+            }
+            return response.text();
+          })
+          .then(content => {
+            setReadmeContent(content);
+          })
+          .catch(altError => {
+            console.error("Error fetching README.md from alternative path:", altError);
+            setReadmeContent("Failed to load README.md content. Please make sure the file exists in the public directory.");
+          });
+      });
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value);
@@ -225,6 +258,13 @@ function App() {
       <div className="raw-html-container">
         <h2>Raw HTML</h2>
         <pre className="raw-html-display">{rawHtml}</pre>
+      </div>
+      
+      <div className="readme-container">
+        <h2>Project Documentation</h2>
+        <div className="readme-content">
+          <ReactMarkdown>{readmeContent}</ReactMarkdown>
+        </div>
       </div>
     </div>
   );

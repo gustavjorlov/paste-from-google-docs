@@ -2,6 +2,16 @@
 
 A React application that converts formatted content from Google Docs (and other rich text sources) to Markdown format using clipboard MIME types.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Understanding Clipboard MIME Types](#understanding-clipboard-mime-types)
+- [HTML to Markdown Conversion](#html-to-markdown-conversion)
+- [Implementation Details](#implementation-details)
+- [Getting Started](#getting-started)
+- [Development](#development)
+
 ## Overview
 
 CopyPasteEditor is a web application that allows users to paste rich text content (particularly from Google Docs) and automatically converts it to Markdown format. The application leverages the clipboard API to access HTML content and transforms it into clean, portable Markdown.
