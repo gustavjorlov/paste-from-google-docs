@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 
 function App() {
   const [text, setText] = useState("");
+  const [rawHtml, setRawHtml] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value);
@@ -150,6 +151,9 @@ function App() {
     console.log(content);
     console.log(googledata);
     console.log(googledata2);
+    
+    // Store the raw HTML for display
+    setRawHtml(content || "No HTML content in clipboard");
 
     if (content) {
       // Convert HTML to Markdown
@@ -217,6 +221,10 @@ function App() {
           <u>underline</u>, <s>strikethrough</s>, headings, lists, links, and
           more.
         </p>
+      </div>
+      <div className="raw-html-container">
+        <h2>Raw HTML</h2>
+        <pre className="raw-html-display">{rawHtml}</pre>
       </div>
     </div>
   );
