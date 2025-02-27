@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "./App.css";
+import ReactMarkdown from "react-markdown";
 
 function App() {
   const [text, setText] = useState("");
@@ -70,9 +71,9 @@ function App() {
             // Check if parent is OL or UL
             const parent = element.parentElement;
             if (parent && parent.tagName.toLowerCase() === "ol") {
-              return `1. ${children}\n`;
+              return `1. ${children}`;
             }
-            return `- ${children}\n`;
+            return `- ${children}`;
           }
           case "blockquote":
             return `> ${children}\n\n`;
@@ -143,8 +144,12 @@ function App() {
 
     // Try to get HTML content first
     let content = clipboardData.getData("text/html");
+    const googledata = clipboardData.getData("application/x-vnd.google-docs-document-slice-clip+wrapped");
+    const googledata2 = clipboardData.getData("application/x-vnd.google-docs-internal-clip-id");
 
     console.log(content);
+    console.log(googledata);
+    console.log(googledata2);
 
     if (content) {
       // Convert HTML to Markdown
@@ -182,18 +187,26 @@ function App() {
   return (
     <div className="app-container">
       <h1>Google Docs to Markdown Converter</h1>
-      <div className="text-area-container">
-        <textarea
-          value={text}
-          onChange={handleChange}
-          onPaste={handlePaste}
-          placeholder="Paste content from Google Docs here..."
-          rows={10}
-          cols={50}
-          className="text-area"
-        />
+      <div className="editor-container">
+        <div className="text-area-container">
+          <h2>Markdown Editor</h2>
+          <textarea
+            value={text}
+            onChange={handleChange}
+            onPaste={handlePaste}
+            placeholder="Paste content from Google Docs here..."
+            rows={20}
+            className="text-area"
+          />
+          <div className="character-count">Character count: {text.length}</div>
+        </div>
+        <div className="preview-container">
+          <h2>Preview</h2>
+          <div className="markdown-preview">
+            <ReactMarkdown>{text}</ReactMarkdown>
+          </div>
+        </div>
       </div>
-      <div className="character-count">Character count: {text.length}</div>
       <div className="instructions">
         <p>
           Copy content from Google Docs and paste it here to convert formatting
