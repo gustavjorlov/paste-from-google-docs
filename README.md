@@ -18,6 +18,7 @@ CopyPasteEditor is a web application that allows users to paste rich text conten
   - Links and images
   - Blockquotes
   - Code blocks
+  - Tables with alignment and captions
   - And more
 
 ## Understanding Clipboard MIME Types
@@ -133,6 +134,34 @@ The converter handles various HTML elements and styles:
 | `<code>` | `` `code` `` |
 | `<pre>` | ` ```code block``` ` |
 | `<img>` | `![alt text](image url)` |
+| `<table>` | Markdown table format |
+| `<th>` | Table header cells |
+| `<td>` | Table data cells |
+| `<caption>` | *Table: caption text* |
+
+### Table Support
+
+The application now supports converting HTML tables to Markdown tables and rendering them in the preview. Key features include:
+
+#### Table Conversion Features
+
+- **Basic Table Structure**: Converts HTML `<table>`, `<tr>`, `<th>`, and `<td>` elements to Markdown table syntax
+- **Column Alignment**: Detects text alignment from HTML and applies it to Markdown tables using colons in the separator row:
+  - Left-aligned: `:---`
+  - Center-aligned: `:---:`
+  - Right-aligned: `---:`
+- **Table Captions**: Supports HTML `<caption>` elements, displaying them as italic text above the table
+- **Complex Tables**: Handles colspan attributes by adding multiple cells in the markdown output
+- **Empty Cell Handling**: Ensures empty cells have at least a space to maintain table structure
+
+#### Markdown Table Syntax
+
+```markdown
+| Header 1 | Header 2 | Header 3 |
+| :------- | :------: | -------: |
+| Left     | Center   | Right    |
+| aligned  | aligned  | aligned  |
+```
 
 ### Implementation Highlights
 
